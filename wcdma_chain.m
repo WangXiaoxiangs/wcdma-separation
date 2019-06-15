@@ -2,12 +2,12 @@
 
 % CRC parameter
 % crcGen = comm.CRCGenerator('z^16 + z^15 + z^2 + 1');
-% crcDet = comm.CRCDetector('z^16 + z^15 + z^2 + 1');
-% % convlution code
-% trellis = poly2trellis(9, [561 753]);
-% % ovsf code
-% ovsf_code = comm.OVSFCode('SpreadingFactor', 64, 'Index', 3, ...
-%     'SamplesPerFrame', 2560);
+crcDet = comm.CRCDetector('z^16 + z^15 + z^2 + 1');
+% convlution code
+trellis = poly2trellis(9, [561 753]);
+% ovsf code
+ovsf_code = comm.OVSFCode('SpreadingFactor', 64, 'Index', 3, ...
+    'SamplesPerFrame', 2560);
 % % Gold code
 % gold_i = comm.GoldSequence('FirstPolynomial', [25,3,0], ...
 %     'FirstInitialConditions', [zeros(1, 24), 1], ...
@@ -24,17 +24,17 @@
 %     'Shape', 'Square root', 'RolloffFactor', 0.22, ...
 %     'FilterSpanInSymbols', 10, 'OutputSamplesPerSymbol', ...
 %     8, 'Gain', 1/sqrt(8));
-% sRRC_downlink = comm.RaisedCosineReceiveFilter(...
-%     'Shape', 'Square root', 'RolloffFactor', 0.22, ...
-%     'FilterSpanInSymbols', 10, 'InputSamplesPerSymbol', 8, ...
-%     'DecimationFactor', 8, 'Gain', 1 / sqrt(8));
+sRRC_downlink = comm.RaisedCosineReceiveFilter(...
+    'Shape', 'Square root', 'RolloffFactor', 0.22, ...
+    'FilterSpanInSymbols', 10, 'InputSamplesPerSymbol', 8, ...
+    'DecimationFactor', 8, 'Gain', 1 / sqrt(8));
 % 
 % % DPDCH data
 % data = randi([0 1], 280, 1);            % in 10 ms, 15 slots
 % data(1: 16) = ones(16, 1);
 % data_crc = [crcGen(data); zeros(4, 1)]; % apply CRC
 % data_enc = convenc(data_crc, trellis);  % apply convlution code
-% ovsf_sf = ovsf_code();                  % ovsf code
+ovsf_sf = ovsf_code();                  % ovsf code
 % dpdch_I = zeros(2560, 15);              % dpdch data
 % % split into 15 slots
 % for k = 1: 1: 15
