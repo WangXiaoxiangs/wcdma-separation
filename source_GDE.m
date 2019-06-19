@@ -3,7 +3,7 @@
 N = 4;          % number of sources
 M = 12;          % received attennas
 num = 1e4;      % singal samples
-
+upsamples = 8;  % upsample times
 mimochannel = comm.MIMOChannel(...
     'SampleRate', 1000, ...
     'PathDelays', zeros(1, N), ...
@@ -13,12 +13,22 @@ mimochannel = comm.MIMOChannel(...
     'NumTransmitAntennas', N, ...
     'NumReceiveAntennas', M, ...
     'PathGainsOutputPort', true);
+sRRC_filt = comm.RaisedCosineTransmitFilter(...
+    'Shape', 'Square root', ...
+    'RolloffFactor', 0.3, ...
+    'FilterSpanInSymbols', 10, ...
+    'OutputSamplesPerSymbol', upsamples);
 
 %% signal generate
 data = randi([0 3], num, N);        % suppose QPSK modulation
 datamod = pskmod(data, 4, pi/4);    % QPSK modulation
-txsig = awgn(datamod, 20, 'measured');   % add noise  
-[rxsig, H] = mimochannel(txsig);    % after channel
+dataRRc = sRRC_filt(datamod);       % sRRC filter
+[txsig, H] = mimochannel(dataRRc);  % after MIMO channel
+noise_Var = 10 + 10 * rand(M, 1);   % add different power noise
+rxsig = zeros(upsamples * num, M);  % received signal
+for k = 1: 1: M
+    rxsig(:, k) = awgn(txsig(:, k), noise_Var(k), 'measured');
+end
 
 %% GDE algorithm
 Rx = rxsig' * rxsig / num;          % autocorrlation
@@ -30,7 +40,7 @@ V1 = V(:, idx);
 GammaMartix = [V1, zeros(M - 1, 1); ...
     zeros(1, M - 1), 1];            % Unity martix
 T = GammaMartix' * Rx * GammaMartix;% after transform
-% GerschgorinPlot(T);                 % Gerschgorin graph
+GerschgorinPlot(T);                 % Gerschgorin graph
 
 GDE = zeros(M - 2, 1);
 temp = sum(abs(T((1: M - 1), end))) * 0.5 / (M - 1);
